@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-inline'"
+    />
+    <link rel="stylesheet" href="../css/all.min.css" />
+    <link rel="stylesheet" href="../css/materialize.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <title>Image Changer</title>
+  </head>
+  <body>
+    <div class="container center-align" id="app">
+      <h3><i class="fas fa-images"></i> Image Changer</h3>
+      <p>Choose an image to process</p>
+      <form id="form">
+        <div class="file-field input-field">
+          <div class="btn" style="position: relative">
+            <span>Choose</span>
+            <input id="unique-img" type="file" />
+          </div>
+
+          <button class="btn black" id="reset-btn">Reset selected image</button>
+
+          <div id="btn-wrapper">
+            <div class="btn-small btn-s" id="invert-btn" data-value="invert">
+              Invert
+            </div>
+            <div
+              class="btn-small btn-s"
+              id="grayscale-btn"
+              data-value="grayscale"
+            >
+              Grayscale
+            </div>
+            <div class="btn-small btn-s" id="sepia-btn" data-value="sepia">
+              Sepia
+            </div>
+            <div
+              class="btn-small btn-s"
+              id="brightness-btn"
+              data-value="brightness"
+            >
+              Brightness
+            </div>
+
+            <div class="btn-small btn-ss" id="sharpen-btn" data-value="sharpen">
+              Sharpen
+            </div>
+            <div class="btn-small btn-ss" id="blur-btn" data-value="blur">
+              Blur
+            </div>
+          </div>
+          <div class="file-path-wrapper">
+            <input
+              type="text"
+              class="file-path validate"
+              placeholder="Choose file"
+            />
+          </div>
+        </div>
+
+        <p>
+          <strong>Quality:</strong>
+          <em>The lower the quality, the smaller the file size</em>
+        </p>
+        <p class="range-field">
+          <input type="range" min="0" max="100" id="slider" />
+        </p>
+
+        <input type="submit" value="Apply" class="btn black" />
+      </form>
+
+      <div class="card output">
+        <div class="card-content">
+          Output Path: <span id="output-path"></span>
+        </div>
+      </div>
+      <span>Or set custom path:</span>
+      <div class="file-path-wrapper">
+        <input
+          id="custom-path"
+          type="text"
+          value=""
+          class="file-path validate"
+          placeholder="write your custom path"
+        />
+      </div>
+    </div>
+    <div class="container center-align" id="hidden-app"></div>
+    <script src="../js/materialize.min.js"></script>
+    <script>
+      const path = require("path");
+      const os = require("os");
+      const { ipcRenderer } = require("electron");
+
+      const app = document.getElementById("app");
+      const hiddenApp = document.getElementById("hidden-app");
+      const form = document.getElementById("form");
+      const resetBtn = document.getElementById("reset-btn");
+      const filtersWrapper = document.getElementById("btn-wrapper");
+
+      const slider = document.getElementById("slider");
+      const img = document.getElementById("unique-img");
+      const inputPath = document.getElementById("custom-path");
+      const outputPath = document.getElementById("output-path");
+      let destination = path.join(os.homedir(), "lab1");
+      let filters = [];
+
+      inputPath.onchange = (e) => {
+        if (e.target.value) {
+          outputPath.innerText = e.target.value;
+        }
+      };
+
+      filtersWrapper.onclick = (e) => {
+        const currentFilter = e.target.dataset.value;
+        if (filters.includes(currentFilter)) {
+          filters = filters.filter((itm) => itm !== currentFilter);
+        } else {
+          filters.push(currentFilter);
+        }
+
+        Array.from(filtersWrapper.children).forEach((itm) => {
+          if (filters.includes(itm.dataset.value)) {
+            itm.classList.add("red");
+          } else {
+            itm.classList.remove("red");
+          }
+        });
+      };
+
+      outputPath.innerText = destination;
+
+      imgPath = "";
+
+      resetBtn.onclick = (e) => {
+        e.preventDefault();
+        form.reset();
+      };
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        imgPath = img.files[0].path;
+        const quality = slider.value;
+
+        ipcRenderer.send("image:customize", {
+          imgPath,
+          destination,
+          quality,
+          filters,
+        });
+      });
+
+      ipcRenderer.on("image:done", () => {
+        M.toast({
+          html: `Image have resized to ${slider.value}% quality, with such filters: ${filters}`,
+        });
+      });
+
+      ipcRenderer.on("app:warningConfirmation", () => {
+        M.toast({
+          html: `The key is incorrect`,
+        });
+      });
+
+      ipcRenderer.on("app:expiredLicense", () => {
+        const activationInput = document.createElement("input");
+        const activationButton = document.createElement("button");
+        activationInput.type = "text";
+        activationInput.placeholder = "Type key here...";
+        activationInput.className = "mdc-text-field__input";
+        activationButton.className = "btn black";
+        activationButton.innerText = "Activate";
+        app.style.visibility = "hidden";
+        hiddenApp.style.visibility = "visible";
+
+        activationButton.onclick = () => {
+          ipcRenderer.send("app:activate", {
+            code: activationInput.value,
+          });
+        };
+
+        hiddenApp.append(activationInput);
+        hiddenApp.append(activationButton);
+      });
+
+      ipcRenderer.on("app:activated", () => {
+        app.style.visibility = "visible";
+        hiddenApp.style.visibility = "hidden";
+      });
+    </script>
+  </body>
+</html>
