@@ -8,6 +8,7 @@ import CustomCaptcha from './components/CustomCaptcha';
 import ActivationScreen from './components/ActivationScreen';
 
 function App() {
+  const [filters, setFilters] = useState<string[]>([]);
   const [file, setFile] = useState<File>();
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaImages, setCaptchaImages] = useState<{ url: string; }[]>([]);
@@ -16,6 +17,14 @@ function App() {
   const chooseFileRef = useRef<null | HTMLInputElement>(null);
   const handleChooseFileClick = () => {
     chooseFileRef.current?.click();
+  }
+
+  const handleAddFilter = (filterName: string) => {
+    if (filters.includes(filterName)) {
+      return setFilters((prev) => prev.filter((itm) => itm !== filterName))
+    }
+
+    setFilters((prev) => [...prev, filterName]);
   }
 
   const handleFileChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -82,14 +91,24 @@ function App() {
           <Button variant="contained" sx={{ backgroundColor: 'black' }}>RESET SELECTED IMAGE</Button>
         </Box>
         <Box sx={{ textTransform: 'uppercase' }}>
-          <Button variant="contained">INVERT</Button>
-          <Button variant="contained">GRAYSCALE</Button>
-          <Button variant="contained">SEPIA</Button>
-          <Button variant="contained">BRIGHTNESS</Button>
+          <Button variant="contained"
+            onClick={() => handleAddFilter("invert")}
+            sx={{ backgroundColor: filters.includes('invert') ? 'red' : '' }}>INVERT</Button>
+          <Button variant="contained"
+            onClick={() => handleAddFilter("grayscale")}
+            sx={{ backgroundColor: filters.includes('grayscale') ? 'red' : '' }}>GRAYSCALE</Button>
+          <Button variant="contained"
+            onClick={() => handleAddFilter("sepia")}
+            sx={{ backgroundColor: filters.includes('sepia') ? 'red' : '' }}>SEPIA</Button>
+          <Button variant="contained"
+            onClick={() => handleAddFilter("brightness")}
+            sx={{ backgroundColor: filters.includes('brightness') ? 'red' : '' }}>BRIGHTNESS</Button>
         </Box>
         <Box sx={{ width: '100%' }}>
-          <Button variant="contained" sx={{ width: '50%' }}>SHARPEN</Button>
-          <Button variant="contained" sx={{ width: '50%' }}>BLUR</Button>
+          <Button variant="contained"
+            sx={{ width: '50%', backgroundColor: filters.includes('sharpen') ? 'red' : '' }} onClick={() => handleAddFilter("sharpen")}>SHARPEN</Button>
+          <Button variant="contained"
+            sx={{ width: '50%', backgroundColor: filters.includes('blur') ? 'red' : '' }} onClick={() => handleAddFilter("blur")}>BLUR</Button>
         </Box>
         <Box sx={{ width: '100%' }}>
           <Button
