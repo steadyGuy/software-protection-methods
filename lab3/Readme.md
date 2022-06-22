@@ -1,4 +1,4 @@
-#### Backend is hosting on port *3000*
+#### Backend is hosting on port *3001*
 #### Frontend is hosting on port *80 (http)* via nginx
 #### Database (MongoDB) is hosting on port *27017*, but the access is restricted
 #### Web-based MongoDB admin interface (access to MongoDB via web) is hosting on port *8081*
